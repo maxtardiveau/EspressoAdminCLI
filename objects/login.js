@@ -28,6 +28,16 @@ module.exports = {
 		}
 		
 		client.get(url + "/@license", function(data) {
+			if (typeof data === "string") {
+				try {
+					data = JSON.parse(data);
+				}
+				catch(e) {
+					//console.log(data);
+					console.log(('Unable to parse server response - please make sure your URL is correct: ' + e).red);
+					return;
+				}
+			}
 			if (data.errorMessage) {
 				console.log(data.errorMessage.red);
 				return;

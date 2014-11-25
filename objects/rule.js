@@ -118,13 +118,102 @@ module.exports = {
 		var loginInfo = login.login(cmd);
 		if ( ! loginInfo)
 			return;
-		if ( ! cmd.name) {
-			console.log('Missing parameter: name'.red);
+		if ( ! cmd.ruletype) {
+			console.log('Missing parameter: ruletype'.red);
 			return;
 		}
-		if ( ! cmd.prefix) {
-			prefix = "main";
+		cmd.ruletype = cmd.ruletype.toLowerCase();
+		switch(cmd.ruletype) {
+			case 'sum': cmd.ruletype = 1; break;
+			case 'count': cmd.ruletype = 2; break;
+			case 'formula': cmd.ruletype = 3; break;
+			case 'parentcopy': cmd.ruletype = 4; break;
+			case 'validation': cmd.ruletype = 5; break;
+			case 'commitvalidation': cmd.ruletype = 6; break;
+			case 'event': cmd.ruletype = 7; break;
+			case 'earlyevent': cmd.ruletype = 8; break;
+			case 'commitevent': cmd.ruletype = 9; break;
+			case 'minimum': cmd.ruletype = 11; break;
+			case 'maximum': cmd.ruletype = 12; break;
+			case 'managedparent': cmd.ruletype = 13; break;
+			default: console.log('Invalid rule type'.red); return;
 		}
+		if ( ! cmd.entity_name) {
+			console.log('Missing parameter: entity_name'.red);
+			return;
+		}
+		if ( ! cmd.entity_name.match(/\w+:\w+/)) {
+			console.log('Parameter entity_name must have the format prefix:table'.red);
+			return;
+		}
+		if (cmd.active) {
+			cmd.active = (cmd.active.toLowerCase() === 'true');
+		}
+		else {
+			cmd.active = true;
+		}
+
+		if ( ! cmd.attribute_name && (cmd.ruletype==1 || cmd.ruletype==2 || cmd.ruletype==3 || cmd.ruletype==4 || 
+				cmd.ruletype==11 || cmd.ruletype==12)) {
+			console.log('Missing parameter: attribute_name'.red);
+			return;
+		}
+		
+		var rule_text1 = null;
+		var rule_text2 = null;
+		var rule_text3 = null;
+		
+		// Sum
+		if (cmd.ruletype == 1) {
+			if ( ! cmd.role_name) {
+				console.log('Missing parameter: role_name'.red);
+				return;
+			}
+			if ( ! cmd.child_attribute) {
+				console.log('Missing parameter: child_attribute'.red);
+				return;
+			}
+			rule_text1 = cmd.role_name;
+			rule_text2 = cmd.clause;
+			rule_text3 = cmd.child_attribute;
+		}
+		
+		// Formula
+		var prop4 = null;
+		if (cmd.ruletype === 3) {
+			if ( ! cmd.expression) {
+				console.log('Missing parameter: expression'.red);
+				return;
+			}
+			rule_text1 = cmd.expression;
+			prop4 = 'javascript';
+		}
+		
+		// Validation
+		if (cmd.ruletype === 5 || cmd.ruletype === 6) {
+			if ( ! cmd.expression) {
+				console.log('Missing parameter: expression'.red);
+				return;
+			}
+			rule_text1 = cmd.expression;
+			prop4 = 'javascript';
+			rule_text2 = cmd.error_message;
+		}
+		
+		// Parent copy
+		if (cmd.ruletype == 4) {
+			if ( ! cmd.role_name) {
+				console.log('Missing parameter: role_name'.red);
+				return;
+			}
+			if ( ! cmd.parent_attribute) {
+				console.log('Missing parameter: parent_attribute'.red);
+				return;
+			}
+			rule_text1 = cmd.role_name;
+			rule_text2 = cmd.parent_attribute;
+		}
+
 		var curProj = cmd.project_ident;
 		if ( ! curProj) {
 			curProj = dotfile.getCurrentProject();
@@ -133,81 +222,45 @@ module.exports = {
 			console.log('There is no current project.'.yellow);
 			return;
 		}
-		if ( ! cmd.user_name) {
-			console.log('Missing parameter: user_name'.red);
-			return;
-		}
-		if ( ! cmd.password) {
-			console.log('Missing parameter: password'.red);
-			return;
-		}
-		if ( ! cmd.url) {
-			console.log('Missing parameter: url'.red);
-			return;
-		}
 		
-		var dbasetype = cmd.dbasetype;
-		if ( ! dbasetype) {
-			console.log('You must specify a database type.'.red);
-			return;
-		}
-		dbasetype = dbasetype.toLowerCase();
-		switch(dbasetype) {
-			case "mysql": dbasetype = 1; break;
-			case "oracle": dbasetype = 2; break;
-			case "sqlserver": dbasetype = 5; break;
-			case "sql server": dbasetype = 5; break;
-			case "sqlserverazure": dbasetype = 6; break;
-			case "sql server azure": dbasetype = 6; break;
-			case "nuodb": dbasetype = 7; break;
-			case "postgres": dbasetype = 8; break;
-			case "postgresql": dbasetype = 8; break;
-			default : console.log('Unknown database type: ' + dbasetype); return;
-		}
-
-		context.getContext(cmd, function() {
-			//console.log('Current account: ' + JSON.stringify(context.account));
-			
-			var newDbase = {
-				name: cmd.name,
-				prefix: cmd.prefix,
-				url: cmd.url,
-				catalog_name: cmd.catalog_name,
-				schema_name: cmd.schema_name,
-				user_name: cmd.user_name,
-				password: cmd.password,
-				port_num: cmd.port_num,
-				active: true,
-				comments: cmd.comments,
-				dbasetype_ident: dbasetype,
-				project_ident: curProj
-			};
-			var startTime = new Date();
-			client.post(loginInfo.url + "/dbaseschemas", {
-				data: newDbase,
-				headers: {
-					Authorization: "Espresso " + loginInfo.apiKey + ":1"
-				}
-			}, function(data) {
-				var endTime = new Date();
-				if (data.errorMessage) {
-					console.log(data.errorMessage.red);
-					return;
-				}
-				printObject.printHeader('Database connection was created');
-				_.each(data.txsummary, function(obj) {
-					printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
-				});
-				var trailer = "Request took: " + (endTime - startTime) + "ms";
-				trailer += " - # objects touched: ";
-				if (data.txsummary.length == 0) {
-					console.log('No data returned'.yellow);
-				}
-				else {
-					trailer += data.txsummary.length;
-				}
-				printObject.printHeader(trailer);
+		var newRule = {
+			entity_name: cmd.entity_name,
+			attribute_name: cmd.attribute_name,
+			prop4: prop4,
+			rule_text1: rule_text1,
+			rule_text2: rule_text2,
+			rule_text3: rule_text3,
+			name: cmd.name,
+			comments: cmd.comments,
+			active: cmd.active,
+			ruletype_ident: cmd.ruletype,
+			project_ident: curProj
+		};
+		var startTime = new Date();
+		client.post(loginInfo.url + "/rules", {
+			data: newRule,
+			headers: {
+				Authorization: "Espresso " + loginInfo.apiKey + ":1"
+			}
+		}, function(data) {
+			var endTime = new Date();
+			if (data.errorMessage) {
+				console.log(data.errorMessage.red);
+				return;
+			}
+			printObject.printHeader('Rule was created');
+			_.each(data.txsummary, function(obj) {
+				printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
 			});
+			var trailer = "Request took: " + (endTime - startTime) + "ms";
+			trailer += " - # objects touched: ";
+			if (data.txsummary.length == 0) {
+				console.log('No data returned'.yellow);
+			}
+			else {
+				trailer += data.txsummary.length;
+			}
+			printObject.printHeader(trailer);
 		});
 	},
 	

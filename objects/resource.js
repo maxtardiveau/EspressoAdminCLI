@@ -2,6 +2,7 @@ var Client = require('node-rest-client').Client;
 var colors = require('colors');
 var _ = require('underscore');
 var Table = require('easy-table');
+var sync = require('synchronize');
 
 var context = require('./context.js');
 var login = require('../util/login.js');
@@ -177,7 +178,7 @@ module.exports = {
 				});
 				if ( ! newResource) throw 'Unable to find newly inserted resource in tx summary';
 				
-				function addAttribute(alias, colName) {
+				function addAttribute(alias, colName, callback) {
 					var newAtt = {
 						name: alias,
 						column_name: colName,
@@ -192,37 +193,68 @@ module.exports = {
 					}, function(data2) {
 						if (data2.errorMessage) {
 							console.log(data2.errorMessage.red);
+							if (callback) {
+								callback(data2, null);
+							}
 							return;
 						}
-						console.log('Att inserted');
+						if (callback) {
+							callback(null, data2.txsummary[0]);
+						}
 					});
 				}
 				
+				// This gets called when we're done, possibly with extra objects to show
+				function showSummary(extra) {
+					printObject.printHeader('Resource was created');
+					_.each(data.txsummary, function(obj) {
+						printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
+					});
+					if (extra) {
+						_.each(extra, function(obj) {
+							printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
+						});
+					}
+					var trailer = "Request took: " + (endTime - startTime) + "ms";
+					trailer += " - # objects touched: ";
+					var numObjects = data.txsummary.length;
+					if (extra) {
+						numObjects += extra.length;
+					}
+					if (data.txsummary.length == 0) {
+						console.log('No data returned'.yellow);
+					}
+					else {
+						trailer += numObjects;
+					}
+					printObject.printHeader(trailer);
+				}
+				
+				// If there are attributes, we have to synchronize to wait for them to be created
 				if (cmd.attributes) {
+					//console.log('Creating attributes...');
 					var atts = null;
 					try {
-						console.log('Attributes: ' + cmd.attributes);
+						//console.log('Attributes: ' + cmd.attributes);
 						atts = eval('(' + cmd.attributes + ')');
 					}
 					catch(e) {
 						console.log(('Error parsing attributes: ' + e).red);
 					}
-					_.each(atts, addAttribute);
-				}
-				
-				printObject.printHeader('Resource was created');
-				_.each(data.txsummary, function(obj) {
-					printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
-				});
-				var trailer = "Request took: " + (endTime - startTime) + "ms";
-				trailer += " - # objects touched: ";
-				if (data.txsummary.length == 0) {
-					console.log('No data returned'.yellow);
+					
+					var newAtts = [];
+					sync.fiber(function(){
+						for (var colName in atts) {
+							var newAtt = sync.await(addAttribute(atts[colName], colName, sync.defer()));
+							//console.log('Attribute created');
+							newAtts.push(newAtt);
+						}
+						showSummary(newAtts);
+					});
 				}
 				else {
-					trailer += data.txsummary.length;
+					showSummary();
 				}
-				printObject.printHeader(trailer);
 			});
 		});		
 	},
@@ -232,28 +264,19 @@ module.exports = {
 	},
 	
 	del : function(cmd) {
-		console.log('Sorry -- this function is not yet implemented'.yellow);
-		return;
 		var client = new Client();
 		var loginInfo = login.login(cmd);
 		if ( ! loginInfo) {
 			console.log('You are not currently logged into any Espresso Logic server.'.red);
 			return;
 		}
-
-		var filt = null;
-		if (cmd.prefix) {
-			filt = "prefix='" + cmd.prefix + "'";
-		}
-		else if (cmd.name) {
-			filt = "name='" + cmd.name + "'";
-		}
-		else {
-			console.log('Missing parameter: please specify either name or prefix'.red);
+		
+		if ( ! cmd.name) {
+			console.log('Missing parameter: please specify a name'.red);
 			return;
 		}
-		
-		client.get(loginInfo.url + "/dbaseschemas?filter=" + filt, {
+
+		client.get(loginInfo.url + "/resources?filter=container_ident is null and name='" + cmd.name + "'", {
 			headers: {
 				Authorization: "Espresso " + loginInfo.apiKey + ":1"
 			}
@@ -264,11 +287,11 @@ module.exports = {
 				return;
 			}
 			if (data.length === 0) {
-				console.log(("Error: no such database").red);
+				console.log(("Error: no such resource").red);
 				return;
 			}
 			if (data.length > 1) {
-				console.log(("Error: more than one database for the given condition: " + filter).red);
+				console.log(("Error: more than one resource with the given name: " + cmd.name).red);
 				return;
 			}
 			var db = data[0];
@@ -283,7 +306,7 @@ module.exports = {
 					console.log(data2.errorMessage.red);
 					return;
 				}
-				printObject.printHeader('Database connection was deleted, including the following objects:');
+				printObject.printHeader('Resource was deleted, including the following objects:');
 				_.each(data2.txsummary, function(obj) {
 					printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
 				});
@@ -300,6 +323,7 @@ module.exports = {
 		});
 	},
 	
+	// Given an apiversion parameter, retrieve the API version, then call callback
 	getApiVersionAndDoSomething: function(cmd, callback) {
 		var client = new Client();
 		

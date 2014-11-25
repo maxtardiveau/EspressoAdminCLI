@@ -36,7 +36,8 @@
     "easy-table": "0.3.0",
     "node-rest-client": "^1.4.1",
     "osenv": "^0.1.0",
-    "underscore": "^1.7.0"
+    "underscore": "^1.7.0",
+    "synchronize": "^0.9.8"
   },
   "devDependencies": {},
   "repository": {

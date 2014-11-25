@@ -51,7 +51,7 @@ module.exports = {
 			}
 			var fileContent = JSON.parse(fs.readFileSync(dotDirName + "/" + f));
 			if (fileContent.url === url && fileContent.userName === userName) {
-				console.log('Deleting login file: ' + f);
+				//console.log('Deleting login file: ' + f);
 				fs.unlinkSync(dotDirName + "/" + f);
 			}
 		});

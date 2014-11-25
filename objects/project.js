@@ -59,6 +59,7 @@ module.exports = {
 			printObject.printHeader('All projects');
 			var table = new Table();
 			_.each(data, function(p) {
+				table.cell("Ident", p.ident);
 				table.cell("Name", p.name);
 				table.cell("URL", p.url_name);
 				var comments = p.comments;

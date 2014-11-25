@@ -86,7 +86,19 @@ program
 program
 	.command('rule <list>')
 	.description('Administer rules within a project.')
-	.option('--apiversion [apiversion]', 'The name of an API version, if there is more than one')
+	.option('--ruletype [type]', 'The type of the rule, can be: sum,formula,validation,parentcopy')
+	.option('--entity_name [prefix:table]', 'The table, qualified with a prefix, for the rule')
+	.option('--attribute_name [name]', 'The name of the attribute whose value is computed by the rule. Required for sum, count, formula, minimum, maximum.')
+	.option('--role_name [name]', 'The role name - required for sum, count, minimum, maximum')
+	.option('--clause [clause]', 'The clause - required for sum, count, minimum, maximum')
+	.option('--child_attribute [name]', 'The name of the child attribute - required for sum, minimum, maximum')
+	.option('--parent_attribute [name]', 'The name of the parent attribute - required for parent copy')
+	.option('--expression [code]', 'The code for the rule - required for formula, events and validations')
+	.option('--error_message [message]', 'The error mesaage for the rule - required for validations')
+	
+	.option('--name [name]', 'Optional: a name for the rule. If not specified, a name will be generated.')
+	.option('--comments [comments]', 'Optional: a comment for the rule')
+	.option('--active [true|false]', 'Optional: whether the rule should be active, true by default')
 	.option('--project_ident', 'The ident of a project, if other than the current project')
 	.action(rule.doRule);
 
