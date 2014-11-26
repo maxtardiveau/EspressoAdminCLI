@@ -43,7 +43,8 @@ Once the project is created, it becomes the current project.
 ***
 ## Project update
 
-    espressoadmin project update [--name <name> | --url_name <url_name>] [--status <A-I>] [--comments <comments>]
+    espressoadmin project update [--name <name> | --url_name <url_name>] 
+        [--status <A-I>] [--comments <comments>]
 
 The update command updates one or more attribute of the specified project.
 The project can be specified either by its name or by its URL name.
@@ -67,10 +68,10 @@ The project can be specified either by its name or by its URL name.
 ***
 ## Project import
 
-    espressoadmin project import --file <filename> [--name <name> | --url_name <url_name>]
+    espressoadmin project import [--file <filename>] [--name <name> | --url_name <url_name>]
 
 The import command imports a project from the specified JSON export file.
-The `filename` parameter can be - (a dash), in which case stdin is used. This allows you
+If the `filename` parameter is not specified, stdin is used. This allows you
 to pipe in content from another command.
 
 You can optionally give the new project a different name or URL name.
@@ -81,6 +82,6 @@ You can optionally give the new project a different name or URL name.
     espressoadmin project export --file <filename> [--name <name> | --url_name <url_name>]
     
 The export project exports the specified project into a JSON file.
-The `filename` parameter can be - (a dash), in which case stdout is used.
+If the `filename` parameter is not specified, stdout is used.
 
 The project can be specified either by its name or by its URL name.

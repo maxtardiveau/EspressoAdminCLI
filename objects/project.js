@@ -1,6 +1,7 @@
 var Client = require('node-rest-client').Client;
 var colors = require('colors');
 var _ = require('underscore');
+var fs = require('fs');
 var CLITable = require('cli-table');
 var Table = require('easy-table');
 
@@ -345,5 +346,82 @@ module.exports = {
 			var project = data[0];
 			dotfile.setCurrentProject(project.ident, project.name);
 		});
+	},
+	
+	export: function(cmd) {
+		var client = new Client();
+		var loginInfo = login.login(cmd);
+		if ( ! loginInfo)
+			return;
+
+		var filter = null;
+		if (cmd.url_name) {
+			filter = "url_name='" + cmd.url_name + "'";
+		}
+		else if (cmd.name) {
+			filter = "name='" + cmd.name + "'";
+		}
+		else {
+			console.log('Missing parameter: please specify either name or url_name'.red);
+			return;
+		}
+		
+		var toStdout = false;
+		if ( ! cmd.file) {
+			toStdout = true;
+		}
+		
+		client.get(loginInfo.url + "/ProjectExport?filter=" + filter, {
+			headers: {
+				Authorization: "Espresso " + loginInfo.apiKey + ":1"
+			}
+		}, function(data) {
+			//console.log('get result: ' + JSON.stringify(data, null, 2));
+			if (data.errorMessage) {
+				console.log(("Error: " + data.errorMessage).red);
+				return;
+			}
+			if (data.length === 0) {
+				console.log(("Error: no such project").red);
+				return;
+			}
+			
+			if (toStdout) {
+				console.log(JSON.stringify(data, null, 2));
+			}
+			else {
+				var exportFile = fs.openSync(cmd.file, 'w', 0600);
+				fs.writeSync(exportFile, JSON.stringify(data, null, 2));
+			}
+		});
+	},
+	
+	import: function(cmd) {
+		console.log('Sorry - this command is not yet implemented'.red);
+		return;
+		
+		var client = new Client();
+		var loginInfo = login.login(cmd);
+		if ( ! loginInfo)
+			return;
+
+		var filter = null;
+		if (cmd.url_name) {
+			filter = "url_name='" + cmd.url_name + "'";
+		}
+		else if (cmd.name) {
+			filter = "name='" + cmd.name + "'";
+		}
+		else {
+			console.log('Missing parameter: please specify either name or url_name'.red);
+			return;
+		}
+		
+		var toStdout = false;
+		if ( ! cmd.file) {
+			toStdout = true;
+		}
+		
+		var fileContent = JSON.parse(fs.readFileSync(dotDirName + "/" + f));
 	}
 };
