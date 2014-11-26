@@ -76,4 +76,4 @@ Prints which server is the current server (if any) and project, and what aliases
 ***
 ## Object-specific commands
 
-* [Projects](./project.md/)
+* [Projects](project.md)
