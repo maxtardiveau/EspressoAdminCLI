@@ -18,6 +18,14 @@ module.exports = {
 			console.log('You must specify the URL to the Espresso Logic server'.red);
 			return;
 		}
+		if ( ! cmd.username) {
+			console.log('You must specify a user name'.red);
+			return;
+		}
+		if ( ! cmd.password) {
+			console.log('You must specify a password'.red);
+			return;
+		}
 		
 		// Remove trailing slash if present
 		if (url.match(/.*\/$/)) {
@@ -34,6 +42,10 @@ module.exports = {
 				}
 				catch(e) {
 					//console.log(data);
+					if (data.length > 6 && data.substring(0, 6) === '<html>') {
+						console.log('The server is alive, but the URL seems to be incorrect.'.red);
+						return;
+					}
 					console.log(('Unable to parse server response - please make sure your URL is correct: ' + e).red);
 					return;
 				}

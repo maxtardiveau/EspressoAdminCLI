@@ -116,7 +116,7 @@ module.exports = {
 		while (str.length < termWidth ) {
 			str += " ";
 		}
-		console.log(str.bgWhite.blue);
+		console.log(str.green);
 	},
 	
 	getScreenWidth: function() {
