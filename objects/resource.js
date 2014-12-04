@@ -107,7 +107,7 @@ module.exports = {
 		var loginInfo = login.login(cmd);
 		if ( ! loginInfo)
 			return;
-		if ( ! cmd.name) {
+		if ( ! cmd.resource_name) {
 			console.log('Missing parameter: name'.red);
 			return;
 		}
@@ -148,7 +148,7 @@ module.exports = {
 
 		module.exports.getApiVersionAndDoSomething(cmd, function(apiversion_ident) {
 			var newResource = {
-				name: cmd.name,
+				name: cmd.resource_name,
 				table_name: cmd.table_name,
 				prefix: cmd.prefix,
 				description: cmd.description,
@@ -271,12 +271,12 @@ module.exports = {
 			return;
 		}
 		
-		if ( ! cmd.name) {
+		if ( ! cmd.resource_name) {
 			console.log('Missing parameter: please specify a name'.red);
 			return;
 		}
 
-		client.get(loginInfo.url + "/resources?filter=container_ident is null and name='" + cmd.name + "'", {
+		client.get(loginInfo.url + "/resources?filter=container_ident is null and name='" + cmd.resource_name + "'", {
 			headers: {
 				Authorization: "Espresso " + loginInfo.apiKey + ":1"
 			}
@@ -291,7 +291,7 @@ module.exports = {
 				return;
 			}
 			if (data.length > 1) {
-				console.log(("Error: more than one resource with the given name: " + cmd.name).red);
+				console.log(("Error: more than one resource with the given name: " + cmd.resource_name).red);
 				return;
 			}
 			var db = data[0];

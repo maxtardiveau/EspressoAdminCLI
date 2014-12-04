@@ -102,7 +102,7 @@ module.exports = {
 		var loginInfo = login.login(cmd);
 		if ( ! loginInfo)
 			return;
-		if ( ! cmd.name) {
+		if ( ! cmd.db_name) {
 			console.log('Missing parameter: name'.red);
 			return;
 		}
@@ -153,7 +153,7 @@ module.exports = {
 			//console.log('Current account: ' + JSON.stringify(context.account));
 			
 			var newDbase = {
-				name: cmd.name,
+				name: cmd.db_name,
 				prefix: cmd.prefix,
 				url: cmd.url,
 				catalog_name: cmd.catalog_name,
@@ -211,11 +211,11 @@ module.exports = {
 		if (cmd.prefix) {
 			filt = "prefix='" + cmd.prefix + "'";
 		}
-		else if (cmd.name) {
-			filt = "name='" + cmd.name + "'";
+		else if (cmd.db_name) {
+			filt = "name='" + cmd.db_name + "'";
 		}
 		else {
-			console.log('Missing parameter: please specify either name or prefix'.red);
+			console.log('Missing parameter: please specify either db_name or prefix'.red);
 			return;
 		}
 		

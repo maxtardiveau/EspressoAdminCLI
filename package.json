@@ -1,6 +1,6 @@
 {
   "name": "espresso-admin-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The command line utility for Espresso Logic administration",
   "main": "espressoadmin.js",
   "scripts": {

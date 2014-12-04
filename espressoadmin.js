@@ -13,6 +13,7 @@ var project = require('./objects/project.js');
 var dbase = require('./objects/dbase.js');
 var resource = require('./objects/resource.js');
 var rule = require('./objects/rule.js');
+var authprovider = require('./objects/authprovider.js');
 var dotfile = require('./util/dotfile.js');
 
 program
@@ -45,18 +46,19 @@ program
 program
 	.command('project <list|create|update|delete|use|import|export>')
 	.description('Administer projects. Actions are: list, create, update, delete, use, export')
-	.option('--name [name]', 'The name of the project')
+	.option('--project_name [name]', 'The name of the project')
 	.option('--url_name [url_name]', 'The name of the project')
-	.option('--status [status]', 'The status of the project, can be A (for Active) or I for (Inactive)')
-	.option('--comments [comments]', 'A description of the project')
-	.option('--file [file]', 'For import/export, the name of a file to read from/save to, or - for stdin/stdout')
-	.option('--verbose', 'Whether to display detailed results, or just a summary')
+	.option('--status [status]', 'Optional: the status of the project, can be A (for Active) or I for (Inactive)')
+	.option('--authprovider [ident]', 'Optional: the ident of the authentication provider for the project')
+	.option('--comments [comments]', 'Optional: a description of the project')
+	.option('--file [file]', 'Optional: for import/export, the name of a file to read from/save to, if unspecified, use stdin/stdout')
+	.option('--verbose', 'Optional: whether to display detailed results, or just a summary')
 	.action(project.doProject);
 
 program
 	.command('database <list|create|update|delete>')
 	.description('Administer databases within a project.')
-	.option('--name [name]', 'The name of the database connection')
+	.option('--db_name [name]', 'The name of the database connection')
 	.option('--prefix [prefix]', 'The prefix of the database connection')
 	.option('--dbasetype [dbasetype]', 'The type of the database connection, can be mysql, oracle, sqlserver, nuodb, postgres')
 	.option('--catalog_name [catalog_name]', 'The catalog in the database')
@@ -70,7 +72,7 @@ program
 program
 	.command('resource <list>')
 	.description('Administer resources within a project.')
-	.option('--name [name]', 'The name of the resource')
+	.option('--resource_name [name]', 'The name of the resource')
 	.option('--type [type]', 'The type of the resource: normal, sql, javascript, storedproc, mongo')
 	.option('--prefix [prefix]', 'The prefix of the table')
 	.option('--table_name [name]', 'The name of the table')
@@ -84,7 +86,7 @@ program
 	.action(resource.doResource);
 
 program
-	.command('rule <list>')
+	.command('rule <list|create|delete>')
 	.description('Administer rules within a project.')
 	.option('--ruletype [type]', 'The type of the rule, can be: sum,formula,validation,parentcopy')
 	.option('--entity_name [prefix:table]', 'The table, qualified with a prefix, for the rule')
@@ -96,11 +98,17 @@ program
 	.option('--expression [code]', 'The code for the rule - required for formula, events and validations')
 	.option('--error_message [message]', 'The error mesaage for the rule - required for validations')
 	
-	.option('--name [name]', 'Optional: a name for the rule. If not specified, a name will be generated.')
+	.option('--rule_name [name]', 'Optional: a name for the rule. If not specified, a name will be generated.')
 	.option('--comments [comments]', 'Optional: a comment for the rule')
 	.option('--active [true|false]', 'Optional: whether the rule should be active, true by default')
 	.option('--project_ident', 'The ident of a project, if other than the current project')
+	.option('--ident [ident]', 'For delete, the ident of the rule to delete')
 	.action(rule.doRule);
+
+program
+	.command('authprovider <list>')
+	.description('Administer authentication providers for an account.')
+	.action(authprovider.doAuthProvider);
 
 program.parse(process.argv);
 

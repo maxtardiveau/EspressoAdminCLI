@@ -60,6 +60,7 @@ module.exports = {
 			var tblWidth = 0;
 			var typeWidth = 0;
 			_.each(data, function(p) {
+				table.cell("Ident", p.ident);
 				table.cell("Table", p.entity_name);
 				tblWidth = p.entity_name.length > tblWidth ? p.entity_name.length : tblWidth;
 				var type = "";
@@ -80,7 +81,7 @@ module.exports = {
 				}
 				typeWidth = type.length > typeWidth ? type.length : typeWidth;
 				
-				var maxWidth = printObject.getScreenWidth() - (tblWidth + typeWidth + 4+ 2);
+				var maxWidth = printObject.getScreenWidth() - (tblWidth + typeWidth + 11+ 2);
 				var maxColWidth = (maxWidth / 2) - 3;
 				
 				table.cell("Type", type);
@@ -230,7 +231,7 @@ module.exports = {
 			rule_text1: rule_text1,
 			rule_text2: rule_text2,
 			rule_text3: rule_text3,
-			name: cmd.name,
+			name: cmd.rule_name,
 			comments: cmd.comments,
 			active: cmd.active,
 			ruletype_ident: cmd.ruletype,
@@ -277,18 +278,18 @@ module.exports = {
 		}
 
 		var filt = null;
-		if (cmd.prefix) {
-			filt = "prefix='" + cmd.prefix + "'";
+		if (cmd.ident) {
+			filt = "ident='" + cmd.ident + "'";
 		}
-		else if (cmd.name) {
-			filt = "name='" + cmd.name + "'";
+		else if (cmd.rule_name) {
+			filt = "name='" + cmd.rule_name + "'";
 		}
 		else {
-			console.log('Missing parameter: please specify either name or prefix'.red);
+			console.log('Missing parameter: please specify either name or ident'.red);
 			return;
 		}
 		
-		client.get(loginInfo.url + "/dbaseschemas?filter=" + filt, {
+		client.get(loginInfo.url + "/rules?filter=" + filt, {
 			headers: {
 				Authorization: "Espresso " + loginInfo.apiKey + ":1"
 			}

@@ -24,10 +24,13 @@ The `list` command shows all projects in the current server.
 ***
 ## Project create
 
-    espressoadmin project create --name <name> --url_name <url_name> [--status <A|I>] [--comments <comments>]
+    espressoadmin project create --project_name <name> --url_name <url_name> [--status <A|I>] 
+        [--comments <comments>] [--verbose]
 
 The create command creates a new project with the given values. Status is active by default, it can be specified
 as A(ctive) or I(nactive).
+
+If the `--verbose` option is specified, the output will include all created objects instead of a summary.
 
 ### Output
 
@@ -43,7 +46,7 @@ Once the project is created, it becomes the current project.
 ***
 ## Project update
 
-    espressoadmin project update [--name <name> | --url_name <url_name>] 
+    espressoadmin project update [--project_name <name> | --url_name <url_name>] 
         [--status <A-I>] [--comments <comments>]
 
 The update command updates one or more attribute of the specified project.
@@ -52,15 +55,17 @@ The project can be specified either by its name or by its URL name.
 ***
 ## Project delete
 
-    espressoadmin project delete [--name <name> | --url_name <url_name>]
+    espressoadmin project delete [--project_name <name> | --url_name <url_name>] [--verbose]
 
 The delete command deletes the specified project and everything it contains.
 The project can be specified either by its name or by its URL name.
 
+If the `--verbose` option is specified, the output will include all deleted objects instead of a summary.
+
 ***
 ## Project use
 
-    espressoadmin project use [--name <name> | --url_name <url_name>]
+    espressoadmin project use [--project_name <name> | --url_name <url_name>]
 
 The use command makes the specified project the current project.
 The project can be specified either by its name or by its URL name.
@@ -68,7 +73,8 @@ The project can be specified either by its name or by its URL name.
 ***
 ## Project import
 
-    espressoadmin project import [--file <filename>] [--name <name> | --url_name <url_name>]
+    espressoadmin project import [--file <filename>] [--project_name <name> | --url_name <url_name>]
+         [--verbose]
 
 The import command imports a project from the specified JSON export file.
 If the `filename` parameter is not specified, stdin is used. This allows you
@@ -76,12 +82,17 @@ to pipe in content from another command.
 
 You can optionally give the new project a different name or URL name.
 
+If the `--verbose` option is specified, the output will include all created objects instead of a summary.
+
 ***
 ## Project export
 
-    espressoadmin project export --file <filename> [--name <name> | --url_name <url_name>]
+    espressoadmin project export --file <filename> [--project_name <name> | --url_name <url_name>]
+         [--verbose]
     
 The export project exports the specified project into a JSON file.
 If the `filename` parameter is not specified, stdout is used.
 
 The project can be specified either by its name or by its URL name.
+
+If the `--verbose` option is specified, the output will include all created objects instead of a summary.

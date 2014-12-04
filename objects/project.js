@@ -84,21 +84,25 @@ module.exports = {
 		var loginInfo = login.login(cmd);
 		if ( ! loginInfo)
 			return;
-		if ( ! cmd.name) {
-			console.log('Missing parameter: name'.red);
+		if ( ! cmd.project_name) {
+			console.log('Missing parameter: project_name'.red);
 			return;
 		}
 		if ( ! cmd.url_name) {
 			console.log('Missing parameter: url_name'.red);
 			return;
 		}
+		if ( ! cmd.authprovider) {
+			console.log('You did not specify an authentication provider -- you will not be able to log into this project until you do so.'.yellow);
+		}
 		context.getContext(cmd, function() {
 			//console.log('Current account: ' + JSON.stringify(context.account));
 			
 			var newProject = {
-				name: cmd.name,
+				name: cmd.project_name,
 				url_name: cmd.url_name,
 				status: 'A',
+				authprovider: cmd.authprovider,
 				account_ident: context.account.ident,
 				comments: cmd.comments
 			};
@@ -111,7 +115,6 @@ module.exports = {
 				newProject.status = cmd.status;
 			}
 
-			
 			var startTime = new Date();
 			client.post(loginInfo.url + "/projects", {
 				data: newProject,
@@ -151,7 +154,7 @@ module.exports = {
 				}
 				printObject.printHeader(trailer);
 				
-				dotfile.setCurrentProject(newProj.ident, cmd.name);
+				dotfile.setCurrentProject(newProj.ident, cmd.project_name);
 			});
 		});
 	},
@@ -163,14 +166,14 @@ module.exports = {
 			return;
 
 		var filter = null;
-		if (cmd.name) {
-			filter = "name='" + cmd.name + "'";
+		if (cmd.project_name) {
+			filter = "name='" + cmd.project_name + "'";
 		}
 		else if (cmd.url_name) {
 			filter = "url_name='" + cmd.url_name + "'";
 		}
 		else {
-			console.log('Missing parameter: please specify either name or url_name'.red);
+			console.log('Missing parameter: please specify either project_name or url_name'.red);
 			return;
 		}
 		
@@ -194,14 +197,17 @@ module.exports = {
 				return;
 			}
 			var project = data[0];
-			if (cmd.name) {
-				project.name = cmd.name;
+			if (cmd.project_name) {
+				project.name = cmd.project_name;
 			}
 			if (cmd.url_name) {
 				project.url_name = cmd.url_name;
 			}
 			if (cmd.comments) {
 				project.comments = cmd.comments;
+			}
+			if (cmd.authprovider) {
+				project.authprovider_ident = cmd.authprovider;
 			}
 			if (cmd.status) {
 				if (cmd.status !== 'A' && cmd.status !== 'I') {
@@ -252,11 +258,11 @@ module.exports = {
 		if (cmd.url_name) {
 			filt = "url_name='" + cmd.url_name + "'";
 		}
-		else if (cmd.name) {
-			filt = "name='" + cmd.name + "'";
+		else if (cmd.project_name) {
+			filt = "name='" + cmd.project_name + "'";
 		}
 		else {
-			console.log('Missing parameter: please specify either name or url_name'.red);
+			console.log('Missing parameter: please specify either project_name or url_name'.red);
 			return;
 		}
 		
@@ -291,9 +297,25 @@ module.exports = {
 					return;
 				}
 				printObject.printHeader('Project was deleted, including the following objects:');
-				_.each(data2.txsummary, function(obj) {
-					printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
+				
+				
+				var delProj = _.find(data2.txsummary, function(p) {
+					return p['@metadata'].resource === 'admin:projects';
 				});
+				if ( ! delProj) {
+					console.log('ERROR: unable to find deleted project'.red);
+					return;
+				}
+				if (cmd.verbose) {
+					_.each(data2.txsummary, function(obj) {
+						printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
+					});
+				}
+				else {
+					printObject.printObject(delProj, delProj['@metadata'].entity, 0, delProj['@metadata'].verb);
+					console.log(('and ' + (data2.txsummary.length - 1) + ' other objects').grey);
+				}
+				
 				var trailer = "Request took: " + (endTime - startTime) + "ms";
 				trailer += " - # objects touched: ";
 				if (data2.txsummary.length == 0) {
@@ -317,11 +339,11 @@ module.exports = {
 		if (cmd.url_name) {
 			filter = "url_name='" + cmd.url_name + "'";
 		}
-		else if (cmd.name) {
-			filter = "name='" + cmd.name + "'";
+		else if (cmd.project_name) {
+			filter = "name='" + cmd.project_name + "'";
 		}
 		else {
-			console.log('Missing parameter: please specify either name or url_name'.red);
+			console.log('Missing parameter: please specify either project_name or url_name'.red);
 			return;
 		}
 		
@@ -358,11 +380,11 @@ module.exports = {
 		if (cmd.url_name) {
 			filter = "url_name='" + cmd.url_name + "'";
 		}
-		else if (cmd.name) {
-			filter = "name='" + cmd.name + "'";
+		else if (cmd.project_name) {
+			filter = "name='" + cmd.project_name + "'";
 		}
 		else {
-			console.log('Missing parameter: please specify either name or url_name'.red);
+			console.log('Missing parameter: please specify either project_name or url_name'.red);
 			return;
 		}
 		
@@ -392,36 +414,70 @@ module.exports = {
 			else {
 				var exportFile = fs.openSync(cmd.file, 'w', 0600);
 				fs.writeSync(exportFile, JSON.stringify(data, null, 2));
+				console.log(('Project has been exported to file: ' + cmd.file).green);
 			}
 		});
 	},
 	
 	import: function(cmd) {
-		console.log('Sorry - this command is not yet implemented'.red);
-		return;
-		
 		var client = new Client();
 		var loginInfo = login.login(cmd);
-		if ( ! loginInfo)
+		if ( ! loginInfo) {
 			return;
+		}
 
-		var filter = null;
-		if (cmd.url_name) {
-			filter = "url_name='" + cmd.url_name + "'";
-		}
-		else if (cmd.name) {
-			filter = "name='" + cmd.name + "'";
-		}
-		else {
-			console.log('Missing parameter: please specify either name or url_name'.red);
-			return;
-		}
-		
-		var toStdout = false;
 		if ( ! cmd.file) {
-			toStdout = true;
+			cmd.file = '/dev/stdin';
 		}
 		
-		var fileContent = JSON.parse(fs.readFileSync(dotDirName + "/" + f));
+		var fileContent = JSON.parse(fs.readFileSync(cmd.file));
+		if (cmd.project_name) {
+			fileContent[0].name = cmd.project_name;
+		}
+		if (cmd.url_name) {
+			fileContent[0].url_name = cmd.url_name;
+		}
+		
+		var startTime = new Date();
+		client.post(loginInfo.url + "/ProjectExport", {
+			data: fileContent,
+			headers: {
+				Authorization: "Espresso " + loginInfo.apiKey + ":1"
+			}
+		}, function(data) {
+			var endTime = new Date();
+			if (data.errorMessage) {
+				console.log(data.errorMessage.red);
+				return;
+			}
+			printObject.printHeader('Project was created, including:');
+				
+			var newProj = _.find(data.txsummary, function(p) {
+				return p['@metadata'].resource === 'ProjectExport';
+			});
+			if ( ! newProj) {
+				console.log('ERROR: unable to find imported project'.red);
+				return;
+			}
+			if (cmd.verbose) {
+				_.each(data.txsummary, function(obj) {
+					printObject.printObject(obj, obj['@metadata'].entity, 0, obj['@metadata'].verb);
+				});
+			}
+			else {
+				printObject.printObject(newProj, newProj['@metadata'].entity, 0, newProj['@metadata'].verb);
+				console.log(('and ' + (data.txsummary.length - 1) + ' other objects').grey);
+			}
+			
+			var trailer = "Request took: " + (endTime - startTime) + "ms";
+			trailer += " - # objects touched: ";
+			if (data.txsummary.length === 0) {
+				console.log('No data returned'.yellow);
+			}
+			else {
+				trailer += data.txsummary.length;
+			}
+			printObject.printHeader(trailer);
+		});
 	}
 };

@@ -76,4 +76,9 @@ Prints which server is the current server (if any) and project, and what aliases
 ***
 ## Object-specific commands
 
-* [Projects](project.md)
+* [Projects](docs/project.md)
+* [Authentication providers](docs/authprovider.md)
+* [Databases](docs/dbase.md)
+* [Resources](docs/resource.md)
+* [Rules](docs/rule.md)
+
